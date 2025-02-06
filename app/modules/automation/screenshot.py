@@ -1,4 +1,6 @@
 import ctypes
+import math
+
 import win32gui
 import win32ui
 import win32con
@@ -12,78 +14,31 @@ class Screenshot:
     def __init__(self):
         self.base_width = 1920
         self.base_height = 1080
-
-    def get_game_scale_ratio(self,game_window_name:str):
-        """
-        获取游戏窗口的分辨率并计算缩放比例，用于自适应游戏窗口大小图像识别
-        :param game_window_name: 游戏窗口名(非启动器)
-        :return:
-        """
-        hwnd = win32gui.FindWindow(None, game_window_name)
-        if hwnd:
-            rect = win32gui.GetClientRect(hwnd)
-            width = rect[2] - rect[0]
-            height = rect[3] - rect[1]
-            return self.base_width / width, self.base_height / height
-        else:
-            logger.error(f"没有找到游戏窗口: {game_window_name}")
-
-    def resize_image(self, image, target_size):
-        """
-        将图像缩放到指定大小
-        :param image:
-        :param target_size:
-        :return:
-        """
-        # cv2.INTER_AREA：区域插值，适合缩小图像。
-        return cv2.resize(image, target_size, interpolation=cv2.INTER_LINEAR)
+        # 排除缩放干扰
+        ctypes.windll.user32.SetProcessDPIAware()
 
     @staticmethod
-    def get_dpi():
-        """ 调用 Windows API 函数获取缩放比例，用于正确截取启动器大小画面 """
-        try:
-            user32 = ctypes.windll.user32
-            user32.SetProcessDPIAware()
-            dpi = user32.GetDpiForSystem()
-            # print(dpi)
-            return dpi
-        except Exception as e:
-            logger.error("获取缩放比例时出错:", e)
-            return 96
+    def get_window(title):
+        hwnd = win32gui.FindWindow(None, title)  # 获取窗口句柄
+        if hwnd:
+            # logger.info(f"找到窗口‘{title}’的句柄为：{hwnd}")
+            return hwnd
+        else:
+            logger.error(f"未找到窗口: {title}")
+            return None
 
-    def take_screenshot(self, window_name, crop=(0,0,1,1), dpi_scale: bool = False):
+    def take_screenshot(self, window_name, crop=(0,0,1,1)):
         """
         截取特定区域
         :param window_name: 需要截图的窗口名
         :param crop: 截取区域, 格式为 (crop_left, crop_top, crop_right, crop_bottom)，范围是0到1之间，表示相对于窗口的比例
-        :param dpi_scale: 截取启动器时需要用到，启动器会受系统dpi缩放的影响
         :return:
         """
-        hwnd = win32gui.FindWindow(None, window_name)  # 获取窗口句柄
-        if not hwnd:
-            logger.error(f"未找到窗口: {window_name}")
-            return None
-
-        # 获取窗口尺寸
+        hwnd = self.get_window(window_name)
+        # 获取带标题的窗口尺寸
         left, top, right, bottom = win32gui.GetWindowRect(hwnd)
         w = right - left
         h = bottom - top
-
-        if dpi_scale:
-            # 获取 DPI 缩放因子
-            dpi = self.get_dpi()
-            scale_factor = dpi / 96  # 96 是 100% DPI 的标准值
-
-            # 根据 DPI 缩放因子调整截图尺寸
-            w = int(w * scale_factor)
-            h = int(h * scale_factor)
-            # print(f"Adjusted width: {w}, Adjusted height: {h}")
-
-        # 计算裁剪区域
-        crop_left = int(crop[0] * w)
-        crop_top = int(crop[1] * h)
-        crop_right = int(crop[2] * w)
-        crop_bottom = int(crop[3] * h)
 
         # 获取设备上下文
         hwnd_dc = win32gui.GetWindowDC(hwnd)
@@ -92,12 +47,13 @@ class Screenshot:
 
         # 创建位图对象
         bitmap = win32ui.CreateBitmap()
-        bitmap.CreateCompatibleBitmap(mfc_dc, crop_right - crop_left, crop_bottom - crop_top)
+        bitmap.CreateCompatibleBitmap(mfc_dc, w, h)
         save_dc.SelectObject(bitmap)
 
-        # 进行截图，直接在截图时指定裁剪区域
-        save_dc.BitBlt((0, 0), (crop_right - crop_left, crop_bottom - crop_top), mfc_dc, (crop_left, crop_top),
-                       win32con.SRCCOPY)
+        # 进行截图
+        user32 = ctypes.windll.user32
+        # 这里必须要是2,0和1都是黑屏，2: 捕捉包括窗口的边框、标题栏以及整个窗口的内容
+        user32.PrintWindow(hwnd, save_dc.GetSafeHdc(), 2)  # PW_RENDERFULLCONTENT=2
 
         # 转换为 numpy 数组
         bmpinfo = bitmap.GetInfo()
@@ -112,14 +68,26 @@ class Screenshot:
 
         # OpenCV 处理
         img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
-        return img
+        # 计算裁剪区域裁剪图像
+        crop_left = int(crop[0] * w)
+        crop_top = int(crop[1] * h)
+        crop_right = int(crop[2] * w)
+        crop_bottom = int(crop[3] * h)
+        img_cropped = img[crop_top:crop_bottom, crop_left:crop_right]
+
+        #缩放图像以自适应分辨率图像识别
+        scale_x = round(self.base_width/w,3)
+        scale_y = round(self.base_height/h,3)
+        img_resized = cv2.resize(img_cropped, (int(img_cropped.shape[1]*scale_x), int(img_cropped.shape[0]*scale_y)))
+
+        return img_resized
 
 
 if __name__ == '__main__':
     # 替换成你的游戏窗口标题
-    game_window = "西山居启动器-尘白禁区"
+    game_window = "尘白禁区"
     screen = Screenshot()
-    screenshot = screen.take_screenshot(game_window,(0.5,0.5,1,1), True)
+    screenshot = screen.take_screenshot(game_window,(0.5,0.5,1,1))
 
     if screenshot is not None:
         cv2.imshow("Game Screenshot", screenshot)
