@@ -207,7 +207,7 @@ class Automation:
         try:
             self.ocr_result = ocr.run(self.current_screenshot, extract)
             if not self.ocr_result:
-                self.logger.error(f"未识别出任何文字")
+                self.logger.info(f"未识别出任何文字")
                 self.ocr_result = []
         except Exception as e:
             self.logger.error(f"OCR识别失败：{e}")
@@ -305,6 +305,7 @@ class Automation:
                 return top_left,bottom_right
         else:
             raise ValueError(f"错误的类型{find_type}")
+        return None
 
     def click_element_with_pos(self,coordinates,action="move_click",offset=(0,0)):
         # 范围内正态分布取点

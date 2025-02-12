@@ -19,7 +19,7 @@ from ..modules.automation import auto
 from ..modules.chasm.chasm import ChasmModule
 from ..modules.enter_game.enter_game import EnterGameModule
 from ..modules.get_power.get_power import GetPowerModule
-from ..modules.get_reward.get_reward import GetRewardModule
+from ..modules.collect_supplies.collect_supplies import GetRewardModule
 from ..modules.person.person import PersonModule
 from ..modules.shopping.shopping import ShoppingModule
 from ..modules.use_stamina.use_stamina import UseStaminaModule

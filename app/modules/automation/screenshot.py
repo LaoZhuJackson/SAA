@@ -108,6 +108,7 @@ class Screenshot:
                 scale_x = self.base_width / w
                 scale_y = self.base_height / h
             # win32api.SetCursorPos((left+screenshot_pos[0], top+screenshot_pos[1]))
+            # ImageUtils.show_ndarray(img_resized)
             return img_resized, scale_x, scale_y, relative_pos
         except Exception as e:
             print(traceback.format_exc())
