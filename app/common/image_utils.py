@@ -88,3 +88,45 @@ class ImageUtils:
         # 对于 cv2.TM_CCOEFF_NORMED，值越大表示匹配越好，所以返回max
         return max_val, max_loc
 
+    @staticmethod
+    def resize_screenshot(hwnd,screenshot,crop,is_starter):
+        # 获取带标题的窗口尺寸
+        left, top, right, bottom = win32gui.GetWindowRect(hwnd)
+        # print(left, top, right, bottom)
+        w = right - left
+        h = bottom - top
+
+        # 计算裁剪区域裁剪图像
+        crop_left = int(crop[0] * w)
+        crop_top = int(crop[1] * h)
+        crop_right = int(crop[2] * w)
+        crop_bottom = int(crop[3] * h)
+        img_cropped = screenshot[crop_top:crop_bottom, crop_left:crop_right]
+
+        # 缩放图像以自适应分辨率图像识别
+        if is_starter:
+            scale_x = 1
+            scale_y = 1
+        else:
+            scale_x = 1920 / w
+            scale_y = 1080 / h
+        if img_cropped is None or img_cropped.size == 0:
+            print(f"{img_cropped.size=}")
+        img_resized = cv2.resize(img_cropped,
+                                 (int(img_cropped.shape[1] * scale_x), int(img_cropped.shape[0] * scale_y)))
+
+        relative_pos = (
+            int(w * crop[0]),
+            int(h * crop[1]),
+            int(w * crop[2]),
+            int(h * crop[3])
+        )
+
+        return img_resized,relative_pos
+
+    @staticmethod
+    def show_ndarray(image,title="show_ndarray"):
+        cv2.imshow(title, image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+

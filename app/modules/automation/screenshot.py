@@ -8,10 +8,14 @@ import win32ui
 import numpy as np
 import cv2
 
+from app.common.image_utils import ImageUtils
 from app.common.logger import logger
+from app.modules.automation.timer import Timer
 
 
 class Screenshot:
+    _screenshot_interval = Timer(0.1)
+
     def __init__(self,logger=None):
         self.base_width = 1920
         self.base_height = 1080
@@ -28,7 +32,7 @@ class Screenshot:
             self.logger.error(f"未找到窗口: {title}")
             return None
 
-    def take_screenshot(self, hwnd, crop=(0,0,1,1),is_starter=True):
+    def screenshot(self, hwnd, crop=(0,0,1,1),is_starter=True):
         """
         截取特定区域
         :param is_starter: 是否是启动器
@@ -38,9 +42,11 @@ class Screenshot:
         """
 
         try:
+            self._screenshot_interval.wait()
+            self._screenshot_interval.reset()
             # 获取带标题的窗口尺寸
             left, top, right, bottom = win32gui.GetWindowRect(hwnd)
-            print(left, top, right, bottom)
+            # print(left, top, right, bottom)
             w = right - left
             h = bottom - top
 
@@ -92,34 +98,15 @@ class Screenshot:
 
             # OpenCV 处理
             img = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
-            # 计算裁剪区域裁剪图像
-            crop_left = int(crop[0] * w)
-            crop_top = int(crop[1] * h)
-            crop_right = int(crop[2] * w)
-            crop_bottom = int(crop[3] * h)
-            img_cropped = img[crop_top:crop_bottom, crop_left:crop_right]
+            img_resized,relative_pos = ImageUtils.resize_screenshot(hwnd,img,crop, is_starter)
 
-            #缩放图像以自适应分辨率图像识别
+            # 缩放图像以自适应分辨率图像识别
             if is_starter:
                 scale_x = 1
                 scale_y = 1
             else:
-                scale_x = self.base_width/w
-                scale_y = self.base_height/h
-            img_resized = cv2.resize(img_cropped, (int(img_cropped.shape[1]*scale_x), int(img_cropped.shape[0]*scale_y)))
-
-            # 预览
-            # cv2.imshow("Game Screenshot", img_resized)
-            # cv2.waitKey(0)
-            # cv2.destroyAllWindows()
-
-            # 计算相对窗口的相对坐标
-            relative_pos = (
-                int(w * crop[0]),
-                int(h * crop[1]),
-                int(w * crop[2] * scale_x),
-                int(h * crop[3] * scale_y)
-            )
+                scale_x = self.base_width / w
+                scale_y = self.base_height / h
             # win32api.SetCursorPos((left+screenshot_pos[0], top+screenshot_pos[1]))
             return img_resized, scale_x, scale_y, relative_pos
         except Exception as e:
@@ -130,10 +117,10 @@ class Screenshot:
 
 if __name__ == '__main__':
     # 替换成你的游戏窗口标题
-    game_window = "西山居启动器-尘白禁区"
+    game_window = "尘白禁区"
     screen = Screenshot(logger=logger)
     hwnd = screen.get_window(game_window)
-    result = screen.take_screenshot(hwnd, (0.5, 0.5, 1, 1),True)
+    result = screen.screenshot(hwnd, (852/1920, 920/1080, 1046/1920, 981/1080), True)
 
     # game_window = "尘白禁区"
     # screen = Screenshot(logger=logger)

@@ -137,7 +137,8 @@ class RunJigsaw(SubTask):
             crop = ((pos[0] - width) / 1920, pos[1] / 1080, width / 1920, height / 1080)
             num = None
             try:
-                screenshot, screenshot_pos, screenshot_scale_factor = Screenshot.take_screenshot(
+                # fixme 截图方式已修改
+                screenshot, screenshot_pos, screenshot_scale_factor = Screenshot.screenshot(
                     config.LineEdit_game_name.value, crop=crop)
                 ocr_result = ocr.recognize_multi_lines(np.array(screenshot))
                 # print(f"{ocr_result=}")
@@ -200,7 +201,7 @@ class AdjustColor(QThread):
         self.hsv_value = None
 
     def run(self):
-        rgb_image, _, _ = auto.take_screenshot(crop=(1130 / 1920, 240 / 1080, 370 / 1920, 330 / 1080))
+        rgb_image, _, _ = auto.screenshot(crop=(1130 / 1920, 240 / 1080, 370 / 1920, 330 / 1080))
         # 转换为NumPy数组
         img_np = np.array(rgb_image)
         # 从RGB格式转换为BGR格式（OpenCV使用BGR）

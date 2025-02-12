@@ -5,7 +5,7 @@ class Timer:
         """
         计时器，用于截图频率自动限时
         :param limit: 限制的时间间隔
-        :param count: 达到次数限制（限制越大越需要达到的计时次数越多，低配电脑越稳定）
+        :param count: limit时间运行reached所需的次数，reached超过count返回true
         """
         self.limit = limit
         self.count = count
@@ -23,6 +23,7 @@ class Timer:
         if not self.started():
             self._current = time.time()
             self._reach_count = 0
+        return self
 
     def current(self):
         """返回当前经过了多久的时间间隔"""

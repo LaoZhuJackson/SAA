@@ -158,7 +158,7 @@ class Input:
             return True  # 鼠标有活动
         return False  # 鼠标没有活动
 
-    def move_click(self, x:int, y:int, mouse_key='left',  press_time:float=0.02,time_out:float=10):
+    def move_click(self, x:int, y:int, mouse_key='left',  press_time:float=0.04,time_out:float=10):
         """
         检测是否正在用鼠标，用户不使用鼠标时快速移动到x，y后点击再返回原位置，主要用于主界面有光标等地方，允许指定鼠标按键，运行设定按下时间
         假后台：能穿透窗口直接点到对应句柄的窗口，但是会抢一瞬间的鼠标
