@@ -16,6 +16,8 @@ class CollectSuppliesModule(BaseTask):
 
         if config.CheckBox_mail.value:
             self.receive_mail()
+        if config.CheckBox_fish_bait.value:
+            self.receive_fish_bait()
 
         self.friends_power()
         self.station_power()
@@ -87,6 +89,35 @@ class CollectSuppliesModule(BaseTask):
                 self.logger.error("领取邮箱资源超时")
                 break
         self.back_to_home()
+
+    def receive_fish_bait(self):
+        timeout = Timer(30).start()
+        while True:
+            self.auto.take_screenshot()
+
+            if self.auto.find_element('开拓任务','text',crop=(36/1920,103/1080,163/1920,155/1080)):
+                if not self.auto.click_element('键领取','text',crop=(22/1920,965/1080,227/1920,1030/1080),extract=((241, 240, 241),128)):
+                    break
+                else:
+                    break
+            if self.auto.click_element("开拓目标", "text",crop=(1611/1920,879/1080,1716/1920,919/1080)):
+                time.sleep(0.3)
+                continue
+            if self.auto.click_element("新星开拓", "text",crop=(1159/1920,718/1080,1,851/1080)):
+                continue
+            if self.auto.click_element("特别派遣", "text",crop=(181/1920,468/1080,422/1920,541/1080)):
+                time.sleep(0.3)
+                continue
+            if self.auto.click_element("战斗", "text",crop=(1536/1920,470/1080,1632/1920,516/1080)):
+                time.sleep(0.3)
+                continue
+
+            if timeout.reached():
+                self.logger.error("领取鱼饵超时")
+                break
+        self.back_to_home()
+
+
 
 
 

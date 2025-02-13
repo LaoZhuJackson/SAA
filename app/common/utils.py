@@ -21,7 +21,7 @@ def random_rectangle_point(area, n=3):
     :param n: 随机数的数量，值越大分布越集中
     :return: tuple(int): (x, y)
     """
-    print(f"{area=}")
+    # print(f"{area=}")
     # area=((1285, 873), (1417, 921))
     x = random_normal_distribution_int(area[0][0], area[1][0], n=n)
     y = random_normal_distribution_int(area[0][1], area[1][1], n=n)
