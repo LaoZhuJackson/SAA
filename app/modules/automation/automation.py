@@ -202,7 +202,7 @@ class Automation:
         return None, None, None
 
     @atoms
-    def perform_ocr(self,extract):
+    def perform_ocr(self,extract:list=None):
         """执行OCR识别，并更新OCR结果列表。如果未识别到文字，保留ocr_result为一个空列表。"""
         try:
             # ImageUtils.show_ndarray(self.current_screenshot)
@@ -308,10 +308,10 @@ class Automation:
             raise ValueError(f"错误的类型{find_type}")
         return None
 
-    def click_element_with_pos(self,coordinates,action="move_click",offset=(0,0)):
+    def click_element_with_pos(self,coordinates,action="move_click",offset=(0,0),n=3):
         # 范围内正态分布取点
-        x,y = random_rectangle_point(coordinates)
-        print(f"{x=},{y=}")
+        x,y = random_rectangle_point(coordinates,n)
+        # print(f"{x=},{y=}")
         # 加上手动设置的偏移量
         click_x = x + offset[0]
         click_y = y + offset[1]
@@ -328,9 +328,10 @@ class Automation:
             raise ValueError(f"未知的动作类型: {action}")
         return True
 
-    def click_element(self,target,find_type:str,threshold:float=0.7,crop:tuple=(0,0,1,1),take_screenshot=False,include:bool=True,need_ocr:bool=True,extract:list=None,action:str='move_click',offset:tuple=(0, 0)):
+    def click_element(self,target,find_type:str,threshold:float=0.7,crop:tuple=(0,0,1,1),take_screenshot=False,include:bool=True,need_ocr:bool=True,extract:list=None,action:str='move_click',offset:tuple=(0, 0),n:int=3):
         """
         寻找目标位置，并在位置做出对应action
+        :param n: 正态分布随机获取点的居中程度，越大越居中
         :param target: 寻找目标
         :param find_type: 寻找类型
         :param threshold: 置信度
@@ -346,7 +347,7 @@ class Automation:
         coordinates = self.find_element(target,find_type,threshold,crop,take_screenshot,include,need_ocr,extract)
         # print(f"{coordinates=}")
         if coordinates:
-            return self.click_element_with_pos(coordinates,action,offset)
+            return self.click_element_with_pos(coordinates,action,offset,n)
         return False
 
     def stop(self):
