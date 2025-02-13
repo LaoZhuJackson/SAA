@@ -205,6 +205,7 @@ class Automation:
     def perform_ocr(self,extract):
         """执行OCR识别，并更新OCR结果列表。如果未识别到文字，保留ocr_result为一个空列表。"""
         try:
+            # ImageUtils.show_ndarray(self.current_screenshot)
             self.ocr_result = ocr.run(self.current_screenshot, extract)
             if not self.ocr_result:
                 self.logger.info(f"未识别出任何文字")

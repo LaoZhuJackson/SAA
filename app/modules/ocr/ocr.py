@@ -8,6 +8,7 @@ from PIL import Image
 from paddleocr import PaddleOCR
 import numpy as np
 
+from app.common.image_utils import ImageUtils
 from app.common.logger import logger
 
 
@@ -35,6 +36,7 @@ class OCR:
                 letter = extract[0]
                 threshold = extract[1]
                 image = self.extract_letters(image,letter,threshold)
+                # ImageUtils.show_ndarray(image)
             original_result = self.ocr(image)
             if original_result:
                 return self.format_and_replace(original_result)
@@ -80,10 +82,17 @@ class OCR:
             for old_text,new_text in self.replacements['conditional'].items():
                 if new_text not in text:
                     text = text.replace(old_text,new_text)
-
             # 格式化输出: [文本, 置信度, 左上和右下坐标]
             formatted_result.append([text, round(confidence, 2), [top_left.tolist(), bottom_right.tolist()]])
+
+        self.log_result(formatted_result)
         return formatted_result
+
+    def log_result(self,results):
+        log_content = []
+        for result in results:
+            log_content.append(f'{result[0]}:{result[1]}')
+        self.logger.debug(f"OCR识别结果: {log_content}")
 
     def extract_letters(self, image, letter=(255, 255, 255), threshold=128):
         """

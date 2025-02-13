@@ -96,7 +96,7 @@ class CollectSuppliesModule(BaseTask):
             self.auto.take_screenshot()
 
             if self.auto.find_element('开拓任务','text',crop=(36/1920,103/1080,163/1920,155/1080)):
-                if not self.auto.click_element('键领取','text',crop=(22/1920,965/1080,227/1920,1030/1080),extract=((241, 240, 241),128)):
+                if not self.auto.click_element('键领取','text',crop=(22/1920,965/1080,227/1920,1030/1080),extract=[(241, 240, 241),128]):
                     break
                 else:
                     break

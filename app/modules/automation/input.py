@@ -249,7 +249,7 @@ class Input:
                     # 滚一次
                     win32gui.PostMessage(self.hwnd, message, wparam, lparam)
                     win32api.SetCursorPos(current_pos)
-                    self.logger.info(f"鼠标移动后点击({x}, {y})")
+                    self.logger.info(f"鼠标移动至({x},{y})滚动滚轮 {delta}")
                     break
                 else:
                     # self.logger.info("鼠标正在使用，等待...")
