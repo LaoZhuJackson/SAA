@@ -14,7 +14,7 @@ from app.modules.automation.timer import Timer
 
 
 class Screenshot:
-    _screenshot_interval = Timer(0.1)
+    _screenshot_interval = Timer(0.3)
 
     def __init__(self,logger=None):
         self.base_width = 1920

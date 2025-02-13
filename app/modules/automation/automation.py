@@ -202,7 +202,7 @@ class Automation:
         return None, None, None
 
     @atoms
-    def perform_ocr(self,extract:list=None):
+    def perform_ocr(self, extract:list=None):
         """执行OCR识别，并更新OCR结果列表。如果未识别到文字，保留ocr_result为一个空列表。"""
         try:
             # ImageUtils.show_ndarray(self.current_screenshot)
@@ -258,7 +258,7 @@ class Automation:
         for result in self.ocr_result:
             match,matched_text = self.is_text_match(result[0], targets, include)
             if match:
-                self.matched_text = matched_text  # 更新匹配的文本变量
+                # self.matched_text = matched_text  # 更新匹配的文本变量
                 self.logger.info(f"目标文字：{matched_text} 相似度：{result[1]:.2f}")
                 return self.calculate_text_position(result)
         self.logger.info(f"目标文字：{', '.join(targets)} 未找到匹配文字")
@@ -281,6 +281,18 @@ class Automation:
 
     @atoms
     def find_element(self,target,find_type:str,threshold:float=0.7,crop:tuple=(0,0,1,1),take_screenshot=False,include:bool=True,need_ocr:bool=True,extract:list=None):
+        """
+        寻找元素
+        :param target:
+        :param find_type:
+        :param threshold:
+        :param crop:
+        :param take_screenshot:
+        :param include:
+        :param need_ocr:
+        :param extract:
+        :return: 查找成功返回（top_left,bottom_right），失败返回None
+        """
         top_left = bottom_right = image_threshold = None
         if take_screenshot:
             # 调用take_screenshot更新self.current_screenshot,self.scale_x,self.scale_y,self.relative_pos
@@ -308,9 +320,21 @@ class Automation:
             raise ValueError(f"错误的类型{find_type}")
         return None
 
-    def click_element_with_pos(self,coordinates,action="move_click",offset=(0,0),n=3):
+    def click_element_with_pos(self,pos,action="move_click",offset=(0,0),n=3,is_calculate=True):
+        """
+        根据左上和右下坐标确定点击位置并执行点击
+        :param is_calculate: 是否计算点击坐标，当传入的是（top_left,bottom_right）时需要计算，传入的是（x,y）时不需要
+        :param pos: （top_left,bottom_right）|(x,y)
+        :param action: 执行的动作类型
+        :param offset: x,y的偏移量
+        :param n: 聚拢值，越大越聚拢
+        :return: None
+        """
         # 范围内正态分布取点
-        x,y = random_rectangle_point(coordinates,n)
+        if is_calculate:
+            x,y = random_rectangle_point(pos, n)
+        else:
+            x,y = pos
         # print(f"{x=},{y=}")
         # 加上手动设置的偏移量
         click_x = x + offset[0]
@@ -347,8 +371,58 @@ class Automation:
         coordinates = self.find_element(target,find_type,threshold,crop,take_screenshot,include,need_ocr,extract)
         # print(f"{coordinates=}")
         if coordinates:
-            return self.click_element_with_pos(coordinates,action,offset,n)
+            return self.click_element_with_pos(coordinates, action, offset, n)
         return False
+
+    @atoms
+    def find_text_in_area(self,crop,extract:list=None):
+        """
+        通过crop找对应的文本内容
+        :param crop: 查找区域
+        :param extract: 指定提取背景
+        :return: ocr识别内容（格式化后的）
+        """
+        # 调用take_screenshot更新self.current_screenshot,self.scale_x,self.scale_y,self.relative_pos
+        screenshot_result = self.take_screenshot(crop)
+        if screenshot_result:
+            self.perform_ocr(extract)
+            return self.ocr_result
+
+    @atoms
+    def find_target_near_source(self,target,source_pos,need_update_ocr:bool=True,crop=(0,0,1,1),include=True,n=30):
+        """
+        查找距离源最近的目标文本的中心坐标。
+        :param n: 聚拢度
+        :param include: 是否包含
+        :param target:目标文本
+        :param need_update_ocr: 是否需要重新截图更新self.ocr_result
+        :param crop: 截图区域,只有need_update_ocr为true时才生效
+        :param source_pos:源的位置坐标，用于计算与目标的距离,格式：（x,y）
+        :return:相对窗口的最近目标文本的中心坐标，格式(x,y)
+        """
+        target_texts = [target] if isinstance(target, str) else list(target)  # 确保目标文本是列表格式
+        min_distance = float('inf')
+        target_pos = None
+        if need_update_ocr:
+            # 更新self.current_screenshot
+            self.take_screenshot(crop)
+            # 更新self.ocr_result
+            self.perform_ocr()
+        for result in self.ocr_result:
+            text = result[0]
+            match, matched_text = self.is_text_match(text, target_texts, include)
+            if match:
+                # 计算出相对屏幕的坐标后再计算中心坐标，用于后续与传入的source_pos计算距离
+                result_x,result_y = random_rectangle_point(self.calculate_text_position(result),n)
+                # 计算距离
+                distance = math.sqrt((source_pos[0]-result_x)**2 + (source_pos[1]-result_y)**2)
+                if distance < min_distance:
+                    min_distance = distance
+                    target_pos = (result_x,result_y)
+        if target_pos is None:
+            self.logger.error(f"目标文字：{target_texts} 未找到匹配文字")
+            return None,min_distance
+        return target_pos,min_distance
 
     def stop(self):
         self.running = False
@@ -362,6 +436,7 @@ class Automation:
         self.pause = False
         # 设置事件，线程会继续
         self.pause_event.set()
+
 
 # 用于保存是否已实例化
 auto_starter = None
