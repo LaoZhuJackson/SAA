@@ -69,24 +69,24 @@ class ImageUtils:
     #     return resized_screenshot
 
     @staticmethod
-    def match_template(screenshot, template,hwnd=None,mask=None):
+    def match_template(screenshot, template,mask=None):
         """
         对模版与截图进行匹配，找出匹配位置
-        :param hwnd: 截图所在的窗口句柄
         :param screenshot:待匹配的截图图像
         :param template:用于匹配的模板图像，通常是一个较小的图像片段
         :param mask:掩码，用于图像匹配中的区域选择。
         :return:
         """
+        match_method = cv2.TM_SQDIFF_NORMED
+        # ImageUtils.show_ndarray(screenshot)
         if mask is not None:
             # cv2.TM_CCOEFF_NORMED 是针对缩放情况下最推荐的模板匹配方法，因为它对亮度和对比度的变化更具有鲁棒性。
-            result = cv2.matchTemplate(screenshot, template ,cv2.TM_CCORR_NORMED, mask=mask)
+            result = cv2.matchTemplate(screenshot, template ,match_method, mask=mask)
         else:
-            result = cv2.matchTemplate(screenshot, template, cv2.TM_CCORR_NORMED)
-        # 获取最匹配的位置
+            result = cv2.matchTemplate(screenshot, template, match_method)
+        # 获取最匹配的位置,TM_SQDIFF_NORMED是返回值越小，匹配度越高
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
-        # 对于 cv2.TM_CCOEFF_NORMED，值越大表示匹配越好，所以返回max
-        return max_val, max_loc
+        return 1-max_val, max_loc
 
     @staticmethod
     def resize_screenshot(hwnd,screenshot,crop,is_starter):
@@ -110,10 +110,10 @@ class ImageUtils:
         else:
             scale_x = 1920 / w
             scale_y = 1080 / h
-        if img_cropped is None or img_cropped.size == 0:
-            print(f"{img_cropped.size=}")
+        # if img_cropped is None or img_cropped.size == 0:
+        #     print(f"{img_cropped.size=}")
         img_resized = cv2.resize(img_cropped,
-                                 (int(img_cropped.shape[1] * scale_x), int(img_cropped.shape[0] * scale_y)))
+                                 (int(img_cropped.shape[1] * scale_x), int(img_cropped.shape[0] * scale_y)),interpolation=cv2.INTER_CUBIC)
 
         relative_pos = (
             int(w * crop[0]),

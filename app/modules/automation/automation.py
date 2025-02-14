@@ -189,9 +189,9 @@ class Automation:
                     # 存入字典缓存
                     self.img_cache[target] = {'mask': mask, 'template': template}
             if mask is not None:
-                matchVal,matchLoc = ImageUtils.match_template(self.current_screenshot, template, self.hwnd, mask)
+                matchVal,matchLoc = ImageUtils.match_template(self.current_screenshot, template, mask)
             else:
-                matchVal, matchLoc = ImageUtils.match_template(self.current_screenshot, template, self.hwnd)
+                matchVal, matchLoc = ImageUtils.match_template(self.current_screenshot, template)
             self.logger.info(f"目标图片：{target.replace('app/resource/images/', '')} 相似度：{matchVal:.2f}")
             if not math.isinf(matchVal) and (threshold is None or matchVal >= threshold):
                 top_left, bottom_right = self.calculate_positions(template,matchLoc)

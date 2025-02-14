@@ -59,9 +59,9 @@ class PersonModule(BaseTask):
         while True:
             self.auto.take_screenshot()
 
-            # if timeout.reached():
-            #     self.logger.error("刷取角色碎片超时")
-            #     break
+            if timeout.reached():
+                self.logger.error("刷取角色碎片超时")
+                break
 
             if fight_flag and self.auto.find_element('完成', 'text', crop=(880 / 1920, 968 / 1080, 1033 / 1920, 1024 / 1080)):
                 finish_flag = True

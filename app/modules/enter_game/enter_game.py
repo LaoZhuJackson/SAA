@@ -50,6 +50,7 @@ class EnterGameModule(BaseTask):
                 time.sleep(5)
                 continue
             if self.auto.click_element('更新', 'text', include=False, crop=(0.5, 0.5, 1, 1), action='mouse_click'):
+                time.sleep(2)
                 logger.info("需要更新")
                 continue
 
@@ -65,7 +66,7 @@ class EnterGameModule(BaseTask):
                 logger.info("已进入游戏")
                 break
             if self.auto.click_element('开始游戏','text', crop=(852/1920, 920/1080, 1046/1920, 981/1080)):
-                time.sleep(5)
+                time.sleep(2)
                 continue
             if self.auto.click_element(['X','x'],'text',crop=(1271/1920,88/1080,1890/1920,367/1080),action='move_click'):
                 continue
