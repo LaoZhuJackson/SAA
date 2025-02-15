@@ -10,6 +10,8 @@ class GetRewardModule(BaseTask):
 
     def run(self):
         self.back_to_home()
+        self.receive_work()
+        self.receive_credential()
 
     def receive_work(self):
         timeout = Timer(30).start()
@@ -54,8 +56,24 @@ class GetRewardModule(BaseTask):
 
     def receive_credential(self):
         timeout = Timer(30).start()
+        first_finish_flag = False
         while True:
             self.auto.take_screenshot()
+
+            if first_finish_flag and self.auto.find_element('解锁', 'text',crop=(1713/1920,788/1080,1869/1920,830/1080)) and not self.auto.find_element('键领取','text',crop=(0, 950 / 1080, 295 / 1920, 1)):
+                break
+            if self.auto.click_element('键领取','text',crop=(0, 950 / 1080, 295 / 1920, 1)):
+                continue
+            if first_finish_flag:
+                if self.auto.click_element('奖励', 'text', crop=(912 / 1920, 994/1080, 1067 / 1920, 1)):
+                    continue
+            if self.auto.click_element('获得道具', 'text', crop=(824 / 1920, 0, 1089 / 1920, 129 / 1080)):
+                first_finish_flag = True
+                continue
+            if self.auto.click_element('每日任务','text',crop=(1233 / 1920, 985 / 1080, 1342 / 1920, 1047/1080)):
+                continue
+            if self.auto.click_element('凭证','text',crop=(280 / 1920, 541 / 1080, 389 / 1920, 607/1080)):
+                continue
 
             if timeout.reached():
                 self.logger.error("领取任务奖励超时")
