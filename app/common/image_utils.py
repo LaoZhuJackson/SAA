@@ -1,7 +1,7 @@
-import math
 import cv2
 import numpy as np
 import win32gui
+from skimage.metrics import structural_similarity as ssim
 
 
 class ImageUtils:
@@ -34,39 +34,30 @@ class ImageUtils:
 
         return mask
 
-    # @staticmethod
-    # def get_window_resolution(hwnd):
-    #     """获取窗口大小"""
-    #     # 获取带标题的窗口尺寸
-    #     left, top, right, bottom = win32gui.GetClientRect(hwnd)
-    #     return right - left, bottom - top
+    @staticmethod
+    def calculate_ssim(image1, image2) -> float:
+        """
+        计算两张图像的结构相似度（SSIM）。传入的两张图像需要长宽一致
 
-    # @staticmethod
-    # def resize_screenshot_to_template(screenshot, hwnd):
-    #     """
-    #     将截图尺度统一到1920*1080，与模版图的尺度相同
-    #     :param screenshot: 截图
-    #     :param hwnd: 窗口句柄
-    #     :return: 缩放后的截图
-    #     """
-    #     # 获取截图的原始尺寸
-    #     screenshot_height, screenshot_width = screenshot.shape[:2]
-    #     window_width,window_height = ImageUtils.get_window_resolution(hwnd)
-    #
-    #     if window_width == 1920 and window_height == 1080:
-    #         # 截图已经是与模版图同一尺度，无需缩放
-    #         return screenshot
-    #     # 计算缩放比例,不选择保持宽高比，使用不同比例的屏幕
-    #     scale_width = window_width / 1920
-    #     scale_height = window_height / 1080
-    #     # scale = min(scale_width, scale_height)  # 按较小的比例进行缩放，保持宽高比
-    #
-    #     # 调整截图大小
-    #     new_width = int(screenshot_width * scale_width)
-    #     new_height = int(screenshot_height * scale_height)
-    #     resized_screenshot = cv2.resize(screenshot, (new_width, new_height))
-    #
-    #     return resized_screenshot
+        参数:
+        - image1: 第一张图像
+        - image2: 第二张图像
+
+        返回:
+        - SSIM值：0到1之间，值越接近1表示图像越相似。
+        """
+        if isinstance(image1,str):
+            image1 = cv2.imread(image1)
+        if isinstance(image2,str):
+            image2 = cv2.imread(image2)
+        # 确保图像是灰度图像，转换为灰度图
+        image1 = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
+        image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
+
+        # 计算SSIM
+        # print(image1.shape, image2.shape)
+        similarity_index, _ = ssim(image1, image2, full=True)
+        return similarity_index
 
     @staticmethod
     def match_template(screenshot, template,mask=None):
@@ -86,7 +77,7 @@ class ImageUtils:
             result = cv2.matchTemplate(screenshot, template, match_method)
         # 获取最匹配的位置,TM_SQDIFF_NORMED是返回值越小，匹配度越高
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
-        print(f"{min_val=},{max_val=}")
+        # print(f"{min_val=},{max_val=}")
         return 1-max_val, max_loc
 
     @staticmethod
