@@ -103,7 +103,7 @@ class CollectSuppliesModule(BaseTask):
             if self.auto.click_element("开拓目标", "text",crop=(1611/1920,879/1080,1716/1920,919/1080)):
                 time.sleep(0.3)
                 continue
-            if self.auto.click_element("新星开拓", "text",crop=(1159/1920,718/1080,1,851/1080)):
+            if self.auto.click_element("新星开拓", "text",crop=(0, 758 / 1080, 1, 828 / 1080)):
                 continue
             if self.auto.click_element("特别派遣", "text",crop=(181/1920,468/1080,422/1920,541/1080)):
                 time.sleep(0.3)

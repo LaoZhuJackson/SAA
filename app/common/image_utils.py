@@ -86,6 +86,7 @@ class ImageUtils:
             result = cv2.matchTemplate(screenshot, template, match_method)
         # 获取最匹配的位置,TM_SQDIFF_NORMED是返回值越小，匹配度越高
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+        print(f"{min_val=},{max_val=}")
         return 1-max_val, max_loc
 
     @staticmethod
