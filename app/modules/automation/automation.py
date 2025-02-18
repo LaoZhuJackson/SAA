@@ -169,9 +169,10 @@ class Automation:
         return top_left, bottom_right
 
 
-    def find_image_element(self,target,threshold,cacheable=True):
+    def find_image_element(self,target,threshold,cacheable=True,match_method=cv2.TM_SQDIFF_NORMED):
         """
         寻找图像
+        :param match_method: 模版匹配使用的方法
         :param target: 图片路径
         :param threshold: 置信度
         :param cacheable: 是否存入内存
@@ -189,28 +190,36 @@ class Automation:
                     # 存入字典缓存
                     self.img_cache[target] = {'mask': mask, 'template': template}
             if mask is not None:
-                matchVal,matchLoc = ImageUtils.match_template(self.current_screenshot, template, mask)
+                matchVal,matchLoc = ImageUtils.match_template(self.current_screenshot, template, mask,match_method=match_method)
             else:
-                matchVal, matchLoc = ImageUtils.match_template(self.current_screenshot, template)
+                matchVal, matchLoc = ImageUtils.match_template(self.current_screenshot, template,match_method=match_method)
             self.logger.info(f"目标图片：{target.replace('app/resource/images/', '')} 相似度：{matchVal:.2f}")
             if not math.isinf(matchVal) and (threshold is None or matchVal >= threshold):
                 top_left, bottom_right = self.calculate_positions(template,matchLoc)
                 return top_left, bottom_right, matchVal
             self.logger.debug(f"没有找到相似度大于 {threshold} 的结果")
         except Exception as e:
+            print(traceback.format_exc())
             self.logger.error(f"寻找图片出错：{e}")
         return None, None, None
 
     @atoms
-    def perform_ocr(self, extract:list=None):
+    def perform_ocr(self, extract:list=None,image=None):
         """执行OCR识别，并更新OCR结果列表。如果未识别到文字，保留ocr_result为一个空列表。"""
         try:
-            # ImageUtils.show_ndarray(self.current_screenshot)
-            self.ocr_result = ocr.run(self.current_screenshot, extract)
+            # image=None时
+            if image is None:
+                # ImageUtils.show_ndarray(self.current_screenshot)
+                self.ocr_result = ocr.run(self.current_screenshot, extract)
+            # 传入特定的图片进行ocr识别
+            else:
+                # ImageUtils.show_ndarray(self.current_screenshot)
+                self.ocr_result = ocr.run(image, extract)
             if not self.ocr_result:
                 self.logger.info(f"未识别出任何文字")
                 self.ocr_result = []
         except Exception as e:
+            print(traceback.format_exc())
             self.logger.error(f"OCR识别失败：{e}")
             self.ocr_result = []  # 确保在异常情况下，ocr_result为列表类型
 
@@ -280,9 +289,10 @@ class Automation:
 
 
     @atoms
-    def find_element(self,target,find_type:str,threshold:float=0.7,crop:tuple=(0,0,1,1),take_screenshot=False,include:bool=True,need_ocr:bool=True,extract:list=None):
+    def find_element(self,target,find_type:str,threshold:float=0.7,crop:tuple=(0,0,1,1),take_screenshot=False,include:bool=True,need_ocr:bool=True,extract:list=None,match_method=cv2.TM_SQDIFF_NORMED):
         """
         寻找元素
+        :param match_method: 模版匹配方法
         :param target:
         :param find_type:
         :param threshold:
@@ -309,7 +319,7 @@ class Automation:
                 self.logger.error(f"当前没有current_screenshot,裁切失败")
         if find_type in ['image', 'text', 'image_threshold']:
             if find_type == 'image':
-                top_left, bottom_right, image_threshold = self.find_image_element(target,threshold)
+                top_left, bottom_right, image_threshold = self.find_image_element(target,threshold,match_method=match_method)
             elif find_type == 'text':
                 top_left, bottom_right = self.find_text_element(target, include, need_ocr, extract)
             if top_left and bottom_right:
@@ -352,9 +362,10 @@ class Automation:
             raise ValueError(f"未知的动作类型: {action}")
         return True
 
-    def click_element(self,target,find_type:str,threshold:float=0.7,crop:tuple=(0,0,1,1),take_screenshot=False,include:bool=True,need_ocr:bool=True,extract:list=None,action:str='move_click',offset:tuple=(0, 0),n:int=3):
+    def click_element(self,target,find_type:str,threshold:float=0.7,crop:tuple=(0,0,1,1),take_screenshot=False,include:bool=True,need_ocr:bool=True,extract:list=None,action:str='move_click',offset:tuple=(0, 0),n:int=3,match_method=cv2.TM_SQDIFF_NORMED):
         """
         寻找目标位置，并在位置做出对应action
+        :param match_method: 模版匹配方法
         :param n: 正态分布随机获取点的居中程度，越大越居中
         :param target: 寻找目标
         :param find_type: 寻找类型
@@ -368,7 +379,7 @@ class Automation:
         :param offset: 点击位置偏移量，默认不偏移
         :return:
         """
-        coordinates = self.find_element(target,find_type,threshold,crop,take_screenshot,include,need_ocr,extract)
+        coordinates = self.find_element(target,find_type,threshold,crop,take_screenshot,include,need_ocr,extract,match_method)
         # print(f"{coordinates=}")
         if coordinates:
             return self.click_element_with_pos(coordinates, action, offset, n)
@@ -436,6 +447,53 @@ class Automation:
         self.pause = False
         # 设置事件，线程会继续
         self.pause_event.set()
+
+    def get_crop_form_first_screenshot(self,crop=(0,0,1,1)):
+        crop_image, _ = ImageUtils.resize_screenshot(self.hwnd, self.first_screenshot, crop, self.is_starter)
+        return crop_image
+
+    @atoms
+    def read_text_from_crop(self,crop=(0,0,1,1),extract=None,is_screenshot=False):
+        """更新截图，并识别指定区域的文字"""
+        if is_screenshot:
+            self.take_screenshot()
+        crop_image, _ = ImageUtils.resize_screenshot(self.hwnd, self.first_screenshot,crop,self.is_starter)
+        # ImageUtils.show_ndarray(crop_image)
+        self.perform_ocr(image=crop_image,extract=extract)
+        return self.ocr_result
+
+    @atoms
+    def find_image_and_count(self,target,template,threshold=0.7,extract=None):
+        """在屏幕截图中查找与目标图片相似的图片，并计算匹配数量。
+
+        参数:
+        - target: 需要找模板图片的图片。
+        - template: 模板图片。
+        - threshold: 匹配阈值。
+        - extract: 是否提取目标颜色，[(对应的rgb颜色),threshold数值]
+
+        返回:
+        - 匹配的数量，或在出错时返回 None。
+        """
+        try:
+            if isinstance(target, str):
+                target = cv2.imread(target)
+            if isinstance(template, str):
+                template = cv2.imread(template)
+            # 将图片从BGR格式转换为RGB格式
+            target_rgb = cv2.cvtColor(target, cv2.COLOR_BGR2RGB)
+            template_rgb = cv2.cvtColor(template, cv2.COLOR_BGR2RGB)
+            if extract is not None:
+                rbg = extract[0]
+                thr = extract[1]
+                target_rgb = ImageUtils.extract_letters(target_rgb, rbg,thr)
+                template_rgb = ImageUtils.extract_letters(template, rbg,thr)
+
+            return ImageUtils.count_template_matches(target_rgb, template_rgb, threshold)
+        except Exception as e:
+            print(traceback.format_exc())
+            self.logger.error(f"寻找图片并计数出错：{e}")
+            return None
 
 
 # 用于保存是否已实例化

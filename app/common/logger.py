@@ -39,13 +39,13 @@ class HtmlFormatter(logging.Formatter):
     def __init__(self, fmt="%(asctime)s - %(levelname)s - %(message)s", datefmt="%H:%M:%S"):
         super().__init__(fmt=fmt, datefmt=datefmt)
 
-    def format(self, record):
-        # 通过logger等级获取对应颜色
-        color = self.formats.get(record.levelno)
-        # logger内容获取
-        message = super().format(record)
-        # 返回对应的html文本
-        return f'<span style="color: {color};">{message}</span><br/>'
+    # def format(self, record):
+    #     # 通过logger等级获取对应颜色
+    #     color = self.formats.get(record.levelno)
+    #     # logger内容获取
+    #     message = super().format(record)
+    #     # 返回对应的html文本
+    #     return f'<span style="color: {color};">{message}</span><br/>'
 
 
 class LogMessageHandler(logging.Handler):

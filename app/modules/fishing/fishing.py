@@ -37,8 +37,7 @@ class FishingModule(BaseTask):
             self.logger.error("运行错误，存在上限的值小于下限")
             return
 
-        # for i in range(config.SpinBox_fish_times.value):
-        for i in range(3):
+        for i in range(config.SpinBox_fish_times.value):
             self.logger.info(f"开始第 {i + 1} 次钓鱼")
             self.enter_fish()
             self.start_fish()
@@ -145,65 +144,6 @@ class FishingModule(BaseTask):
 
             if timeout.reached():
                 self.logger.error("钓鱼结束环节超时")
-                break
-
-
-    def fish(self):
-        """单次钓鱼"""
-        timeout = Timer(60).start()
-        enter_flag = False # 是否进入钓鱼界面
-
-        if not self.press_key:
-            # 尝试自动获取钓鱼按键
-            if not self.get_press_key():
-                self.logger.error("未获取到钓鱼按键，请检查设置")
-                return
-
-        while True:
-            self.auto.take_screenshot()
-
-            if self.auto.find_element(['饵','重量级','巨型','万能','普通','豪华','至尊'],'text',crop=(1658/1920,770/1080,1892/1920,829/1080)):
-                enter_flag = True
-
-            if enter_flag:
-                # 还没甩竿
-                if not self.is_spin_rod():
-                    self.auto.press_key(self.press_key)
-                    time.sleep(2)
-                    continue
-                # 甩竿了
-                else:
-                    if self.is_qte_time():
-                        self.auto.press_key(self.press_key)
-                        continue
-                    if self.auto.find_element('本次获得','text',crop=(832/1920,290/1080,1078/1920,374/1080)):
-                        self.logger.info("钓鱼佬永不空军！")
-                        if config.CheckBox_is_save_fish.value:
-                            if self.auto.find_element("新纪录", "text") or self.auto.find_element(
-                                    "app/resource/images/fishing/new_record.png", "image", threshold=0.5,
-                                    crop=(1245 / 1920, 500 / 1080, 1366 / 1920, 578 / 1080)):
-                                self.save_picture()
-                        self.auto.press_key('esc')
-                        time.sleep(1)
-                        break
-                    if self.auto.find_element('鱼跑掉了','text',crop=(858/1920,151/1080,1054/1920,280/1080)):
-                        self.logger.warn("鱼跑了，空军！")
-                        break
-                    if self.auto.find_element('上钩了','text',crop=(787/1920,234/1080,1109/1920,420/1080)):
-                        self.auto.press_key(self.press_key)
-                        self.bite_time = time.time()
-                        continue
-            if self.auto.find_element(['目标','今日'],'text',crop=(0,957/1080,460/1920,1)):
-                self.auto.press_key('esc')
-                time.sleep(0.5)
-                continue
-            if self.auto.find_element('使用','text',crop=(1405/1920,654/1080,1503/1920,747/1080)):
-                self.auto.press_key('f')
-                time.sleep(1)
-                continue
-
-            if timeout.reached():
-                self.logger.error("钓鱼超时")
                 break
 
     def save_picture(self):

@@ -1,12 +1,5 @@
-import json
-import os
-import time
-
 import cv2
-import paddle
-from PIL import Image
 from paddleocr import PaddleOCR
-import numpy as np
 
 from app.common.image_utils import ImageUtils
 from app.common.logger import logger
@@ -35,7 +28,7 @@ class OCR:
                 # 需要提取文字
                 letter = extract[0]
                 threshold = extract[1]
-                image = self.extract_letters(image,letter,threshold)
+                image = ImageUtils.extract_letters(image,letter,threshold)
                 # ImageUtils.show_ndarray(image)
             original_result = self.ocr(image)
             if original_result:
@@ -94,41 +87,6 @@ class OCR:
             log_content.append(f'{result[0]}:{result[1]}')
         self.logger.debug(f"OCR识别结果: {log_content}")
 
-    def extract_letters(self, image, letter=(255, 255, 255), threshold=128):
-        """
-        将目标颜色的文字转成黑色，将背景转成白色
-        :param image:
-        :param letter: 文字颜色
-        :param threshold:
-        :return: np.ndarray: Shape (height, width, 3)
-        """
-        # (*letter, 0) 将 letter 转换为 (255, 255, 255, 0),表示四个通道（RGB + Alpha），diff 是图像和字母颜色之间的差异
-        # 逐像素地将图像中的每个像素减去给定的字母颜色,字母部分归0
-        diff = cv2.subtract(image, (*letter, 0))
-        # 分离通道
-        r, g, b = cv2.split(diff)
-        # 从 r、g 和 b 三个通道中选择最大值，最终，r 存储的是每个像素通道中最大的差异值
-        cv2.max(r, g, dst=r)
-        cv2.max(r, b, dst=r)
-        # 正向差异最大值
-        positive = r
-        # 反向再减一次，得到的是图像与字母的反向差异
-        cv2.subtract((*letter, 0), image, dst=diff)
-        r, g, b = cv2.split(diff)
-        cv2.max(r, g, dst=r)
-        cv2.max(r, b, dst=r)
-        # 反向差异最大值
-        negative = r
-        # 通过 cv2.add，将它们加起来，得到整个图像中包含字母和背景的综合差异值
-        cv2.add(positive, negative, dst=positive)
-        # alpha 参数控制图像的亮度比例，255.0 / threshold 用于调整图像的对比度，这个操作会将综合差异值放大，白的更白，黑的更黑
-        cv2.convertScaleAbs(positive, alpha=255.0 / threshold, dst=positive)
-        # 将单通道图像转换为3通道图像
-        three_channel_image = cv2.merge([positive, positive, positive])
-        # cv2.imshow("bw", three_channel_image)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
-        return three_channel_image
 
     def instance_ocr(self):
         """实例化OCR，若ocr实例未创建，则创建之"""

@@ -169,6 +169,11 @@ class Input:
         :param time_out: 等待按下的超时时间
         :return:
         """
+        if isinstance(x,float):
+            x = int(x)
+        if isinstance(y,float):
+            y = int(y)
+
         last_position = win32api.GetCursorPos()  # 获取初始鼠标位置
         start_time = time.time()
         try:
@@ -180,6 +185,7 @@ class Input:
                     self.mouse_down(x, y, mouse_key)
                     time.sleep(press_time)
                     self.mouse_up(x, y, mouse_key)
+                    time.sleep(0.05)
                     win32api.SetCursorPos(current_pos)
                     self.logger.info(f"鼠标移动后点击({x}, {y})")
                     break
