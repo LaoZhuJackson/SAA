@@ -1,0 +1,22 @@
+{
+  "config_dir": "D:\\PyCharm\\project\\git_clone\\SAA\\.pyupdater",
+  "filename": "D:\\PyCharm\\project\\git_clone\\SAA\\.pyupdater\\config.pyu",
+  "count": 0,
+  "app_config": {
+    "APP_NAME": "SAA",
+    "CLIENT_CONFIG_PATH": [
+      "AppData",
+      "client_config.py"
+    ],
+    "COMPANY_NAME": "laozhu",
+    "PLUGIN_CONFIGS": {},
+    "UPDATE_PATCHES": true,
+    "MAX_DOWNLOAD_RETRIES": 3,
+    "HTTP_TIMEOUT": 30,
+    "UPDATE_URLS": [
+      "https://github.com/LaoZhuJackson/SAA/releases/latest",
+      "https://gitee.com/laozhu520/auto_chenbai/releases/latest"
+    ],
+    "DATA_DIR": "D:\\PyCharm\\project\\git_clone\\SAA"
+  }
+}
